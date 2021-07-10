@@ -5,74 +5,35 @@ const graphqlHttp = require("express-graphql").graphqlHTTP;
 const { buildSchema } = require("graphql");
 const mongoose = require("mongoose");
 
-const app = express();
+const graphQlSchema = require("./graphql/schema/index");
+const graphQlResolvers = require("./graphql/resolvers/index");
 
-const events = [];
+const isAuth = require("./middleware/is-auth");
+
+const app = express();
 
 app.use(bodyParser.json());
 
+app.use(isAuth);
+
 app.get("/", (req, res, next) => {
-  res.send("Hello World!!");
+  res.send("Welcome to the event management GraphQL API");
 });
 
 // todo:change the route from /graphql to /api.
 app.use(
   "/graphql",
   graphqlHttp({
-    schema: buildSchema(`
-        type Event{
-            _id: ID!
-            title:String!
-            description:String!
-            price:Float!
-            date:String!
-        }
-
-        input EventInput{
-            title:String!
-            description:String!
-            price:Float!
-            date:String!
-        }
-
-        type RootQuery {
-            events: [Event!]!
-        }
-
-        type RootMutation {
-            createEvent(eventInput: EventInput): Event
-        }
-
-        schema {
-            query: RootQuery
-            mutation: RootMutation
-        }
-    `),
-    rootValue: {
-      events: () => {
-        return events;
-      },
-      createEvent: (args) => {
-        const { title, description, price } = args.eventInput;
-        const event = {
-          _id: Math.random().toString(),
-          title,
-          description,
-          price: +price,
-          date: new Date().toISOString(),
-        };
-        events.push(event);
-        return event;
-      },
-    },
+    schema: graphQlSchema,
+    rootValue: graphQlResolvers,
     graphiql: true,
   })
 );
 
-const { MONGO_DB_PASSWORD, MONGO_DB_USER } = process.env;
+const { MONGO_DB_PASSWORD, MONGO_DB_USER, MONGO_DB_Name } = process.env;
 mongoose
   .connect(
-    `mongodb+srv://${MONGO_DB_USER}:${MONGO_DB_PASSWORD}@cluster0.brfdp.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`,
+    `mongodb+srv://${MONGO_DB_USER}:${MONGO_DB_PASSWORD}@cluster0.brfdp.mongodb.net/${MONGO_DB_Name}?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => {
