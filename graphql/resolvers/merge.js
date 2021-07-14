@@ -4,6 +4,15 @@ const User = require("../../models/user");
 
 const { dateToString } = require("../../helpers/date");
 
+// Data Loader
+const DataLoader = require("dataloader");
+const eventLoader = new DataLoader((eventIds) => {
+  return events(eventIds);
+});
+const userLoader = new DataLoader((userIds) => {
+  return User.find({ _id: { $in: userIds } });
+});
+
 const transformEvent = (event) => {
   return {
     ...event._doc,
@@ -35,10 +44,10 @@ const events = async (eventIds) => {
 
 const user = async (userId) => {
   try {
-    const user = await User.findById(userId);
+    const user = await userLoader.load(userId.toString());
     return {
       ...user._doc,
-      createdEvents: events.bind(this, user._doc.createdEvents),
+      createdEvents: () => eventLoader.loadMany(user._doc.createdEvents),
     };
   } catch (err) {
     throw err;
@@ -47,15 +56,16 @@ const user = async (userId) => {
 
 const singleEvent = async (eventId) => {
   try {
-    const eventInfo = await Event.findById(eventId);
-    return transformEvent(eventInfo);
+    const eventInfo = await eventLoader.load(eventId.toString());
+    return eventInfo;
+    // return transformEvent(eventInfo);
   } catch (err) {
     throw err;
   }
 };
 
-exports.user = user;
-exports.singleEvent = singleEvent;
-exports.events = events;
+// exports.user = user;
+// exports.singleEvent = singleEvent;
+// exports.events = events;
 exports.transformBooking = transformBooking;
 exports.transformEvent = transformEvent;
