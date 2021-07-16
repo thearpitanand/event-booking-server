@@ -19,6 +19,7 @@ module.exports = {
       throw err;
     }
   },
+
   bookEvent: async (args, req) => {
     if (!req.isAuth) {
       throw new Error("Unauthenticated!!");

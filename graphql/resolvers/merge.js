@@ -25,15 +25,25 @@ const transformBooking = (booking) => {
   return {
     ...booking._doc,
     user: user.bind(this, booking._doc.user),
-    event: singleEvent.bind(this, booking._doc.event),
+    event: singleEvent.bind(this, booking._doc.event._id),
     createdAt: dateToString(booking._doc.createdAt),
     updatedAt: dateToString(booking._doc.updatedAt),
   };
 };
 
+const singleEvent = async (eventId) => {
+  try {
+    const eventInfo = await eventLoader.load(eventId.toString());
+    return eventInfo;
+  } catch (err) {
+    throw err;
+  }
+};
+
 const events = async (eventIds) => {
   try {
     const events = await Event.find({ _id: { $in: eventIds } });
+
     return events.map((event) => {
       return transformEvent(event);
     });
@@ -47,25 +57,13 @@ const user = async (userId) => {
     const user = await userLoader.load(userId.toString());
     return {
       ...user._doc,
-      createdEvents: () => eventLoader.loadMany(user._doc.createdEvents),
+      createdEvents: async () =>
+        await eventLoader.loadMany(user._doc.createdEvents.toString()),
     };
   } catch (err) {
     throw err;
   }
 };
 
-const singleEvent = async (eventId) => {
-  try {
-    const eventInfo = await eventLoader.load(eventId.toString());
-    return eventInfo;
-    // return transformEvent(eventInfo);
-  } catch (err) {
-    throw err;
-  }
-};
-
-// exports.user = user;
-// exports.singleEvent = singleEvent;
-// exports.events = events;
 exports.transformBooking = transformBooking;
 exports.transformEvent = transformEvent;
