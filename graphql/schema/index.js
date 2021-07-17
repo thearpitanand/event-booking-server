@@ -1,61 +1,39 @@
 const { buildSchema } = require("graphql");
 
+// Import Type, Input, Query and Mutation
+const { AuthData, User, UserInput, login, createUser } = require("./auth");
+const { Booking, bookEvent, bookings, cancelBooking } = require("./booking");
+const { Event, EventInput, createEvent, events } = require("./events");
+
 module.exports = buildSchema(`
-type Booking{
-    _id: ID!
-    event: Event!
-    user: User!
-    createdAt: String!
-    updatedAt: String!
-}
-type Event{
-    _id: ID!
-    title: String!
-    description: String!
-    price: Float!
-    date: String!
-    creator: User!
-}
 
-type User{
-  _id: ID!
-  email: String!
-  createdEvents: [Event!]
-}
+    ${AuthData}
 
-type AuthData {
-    userId: ID!
-    token: String!
-    tokenExpiration: Int!
-}
+    ${User}
 
-input EventInput{
-    title:String!
-    description:String!
-    price:Float!
-    date:String!
-}
+    ${Booking}
 
-input UserInput {
-  email:String!
-  password:String!
-}
+    ${Event}
+    
+    ${UserInput}
 
-type RootQuery {
-    events: [Event!]!
-    bookings:[Booking!]!
-    login(email:String!,password:String!): AuthData!
-}
+    ${EventInput}
 
-type RootMutation {
-    createEvent(eventInput: EventInput): Event
-    createUser(userInput:UserInput): User
-    bookEvent(eventId:ID!): Booking!
-    cancelBooking(bookingId:ID!): Event!
-}
+    type RootQuery {
+        ${events}
+        ${bookings}
+        ${login}
+    }
 
-schema {
-    query: RootQuery
-    mutation: RootMutation
-}
+    type RootMutation {
+        ${bookEvent}
+        ${cancelBooking}
+        ${createUser}
+        ${createEvent}
+    }
+
+    schema {
+        query: RootQuery
+        mutation: RootMutation
+    }
 `);
