@@ -13,6 +13,38 @@ const userLoader = new DataLoader((userIds) => {
   return User.find({ _id: { $in: userIds } });
 });
 
+const events = async (eventIds) => {
+  try {
+    const events = await Event.find({ _id: { $in: eventIds } });
+    return events.map((event) => {
+      return transformEvent(event);
+    });
+  } catch (err) {
+    throw err;
+  }
+};
+
+const singleEvent = async (eventId) => {
+  try {
+    const eventInfo = await eventLoader.load(eventId.toString());
+    return eventInfo;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const user = async (userId) => {
+  try {
+    const user = await userLoader.load(userId.toString());
+    return {
+      ...user._doc,
+      createdEvents: () => events(user._doc.createdEvents),
+    };
+  } catch (err) {
+    throw err;
+  }
+};
+
 const transformEvent = (event) => {
   return {
     ...event._doc,
@@ -29,40 +61,6 @@ const transformBooking = (booking) => {
     createdAt: dateToString(booking._doc.createdAt),
     updatedAt: dateToString(booking._doc.updatedAt),
   };
-};
-
-const singleEvent = async (eventId) => {
-  try {
-    const eventInfo = await eventLoader.load(eventId.toString());
-    return eventInfo;
-  } catch (err) {
-    throw err;
-  }
-};
-
-const events = async (eventIds) => {
-  try {
-    const events = await Event.find({ _id: { $in: eventIds } });
-
-    return events.map((event) => {
-      return transformEvent(event);
-    });
-  } catch (err) {
-    throw err;
-  }
-};
-
-const user = async (userId) => {
-  try {
-    const user = await userLoader.load(userId.toString());
-    return {
-      ...user._doc,
-      createdEvents: async () =>
-        await eventLoader.loadMany(user._doc.createdEvents.toString()),
-    };
-  } catch (err) {
-    throw err;
-  }
 };
 
 exports.transformBooking = transformBooking;
